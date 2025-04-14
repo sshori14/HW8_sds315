@@ -1,0 +1,106 @@
+---
+title: "Homework 7"
+author: "Saksham Shori, SS229822, Github: https://github.com/sshori14/HW8_sds315"
+output:
+  pdf_document:
+  toc: true
+word_document:
+  toc: true
+html_document:
+  toc: true
+  toc_float: true
+---
+
+```{r global_options, echo=FALSE}
+knitr::opts_chunk$set(fig.height=3, fig.width=4, warning=FALSE, tidy=TRUE, tidy.opts=list(width.cutoff=60))
+```
+
+
+```{r, echo=FALSE, message = FALSE, warning = FALSE}
+library(dplyr)
+library(magrittr)
+library(ggplot2)
+library(tidyverse)
+#install.packages("mosaic")
+library(mosaic)
+suppressWarnings(library(dplyr))
+setwd("/Users/sakshamshori/Documents/RStudio/sds315")
+```
+
+# ** PROBLEM 1: regression warm up **
+
+### ** Part A**
+
+```{r, echo=FALSE}
+creatine = read.csv("creatinine.csv")
+creatinemodel = lm(creatclear ~ age, data=creatine)
+coef(creatinemodel)
+```
+
+By using the lin reg function and putting the creatinine's clearance rate as the y axis and the age on the x, the slope for the relationship is found. The equation comes out to be y= -0.62x + 147.81. Using 55 as x allows for clearance rate to be 113.72
+
+### ** Part B**
+
+The clearance rate of the data changes in a direct relationship with age as per according to the slope. The slope is in units of mililiters per minute per year or ml/minute per year. Once again, the slope is ~ -0.62 ml/minute per year which translates to -0.62 clearance rate ml/minute for every year in age. 
+
+### ** Part C**
+
+The creatinine rates for a 40 year old is higher and healthier. This conclusion came from first finding the individual creatinine clearane rates for both 40 & 60 year olds. For the 40 year olds, it is y = (-0.62 * 40) + 147.8, equaling to 123.02. For the 60 year old, it is (-0.62 * 60) + 147.8 equaling around 110.62. Then the residual value for both is observed - expected value. So for the 40yr old: 135 - 123.02 = 11.98 and 60yr old 112 - 110.62 = 1.38. Therefore, verifying the conclusion that the 40yr old is healthier and higher residual value. 
+
+# ** PROBLEM 2: Modeling disease growth **
+
+### ** Part 1**
+
+```{r, echo=FALSE}
+covid = read.csv("covid.csv")
+#
+covid_italy = filter(covid, country == "Italy")
+covid_spain = filter(covid, country == "Spain")
+
+boot_italy = do(10000)*lm(log(deaths) ~ days_since_first_death, data=resample(covid_italy))
+confint(boot_italy)
+
+#estimated doubling time 
+italygrowth = boot_italy$days_since_first_death
+dt_italy = 70/(italygrowth*100)
+quantile(dt_italy, probs = c(0.025, 0.975))
+quantile(dt_italy, probs = c(0.5))
+
+```
+Based on the bootstrapping and confidence interval, the estimated growth rate for Italy is around .1832180 with a 95% conf interval between [.158, .208]. The estimated doubling time for Italy is around 3.81 days with the 95% confidence interval ranging from [3.4, 4.4].
+
+### ** Part 2 **
+
+```{r, echo=FALSE}
+#bootstrapping
+boot_spain = do(10000)*lm(log(deaths) ~ days_since_first_death, data=resample(covid_spain))
+confint(boot_spain)
+
+#estimated doubling time
+spain_growth = boot_spain$days_since_first_death
+spain_double = 70 / (spain_growth*100)
+quantile(spain_double, probs = c(0.025, 0.975))
+quantile(spain_double, probs = c(0.5))
+```
+
+The growth rate value for Spain comes out to about .28 with the 95% conf interval ranging between [.233, .318]. On the other hand, the estimated doubling time is around 2.5 days with 95% conf interval of [2.2, 3].
+
+### ** Part 3 **
+
+```{r, echo=FALSE}
+ggplot(covid) + geom_line(aes(x = days_since_first_death, y = deaths, color = country)) + labs(title = "Daily Deaths per Country", x = "Days since first death", y = "# of Deaths", color = "Country")
+```
+
+This line graph above shows the daily deaths of Covid between Italy and Spain since the first death occurred till present day of the data.
+
+# ** PROBLEM 3: price elasticity of demand **
+
+```{r, echo=FALSE}
+milk = read_csv("milk.csv")
+
+#bootstrapping for milk dataset
+milk_boot = do(10000)*lm(log(sales) ~ log(price), data=resample(milk))
+confint(milk_boot)
+```
+
+The linear reg model on log of sales was ran against log of price to ensure that the slope correlates to price elasticity of demand for the milk. The estimate of price elasticity of demand for milk value is -1.62 with the 95% conf interval coming from the bootstrapping for all the samples of linear regression ranges from [-1.77, -1.45].
